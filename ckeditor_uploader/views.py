@@ -1,19 +1,23 @@
+# -*- coding: utf-8 -*-
+""" ckeditor_uploader's views """
+
 from __future__ import absolute_import
 
 import os
 from datetime import datetime
+from uuid import uuid4
 
 from django.conf import settings
 from django.core.files.storage import default_storage
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
-from django.template import RequestContext
 from django.views import generic
 from django.views.decorators.csrf import csrf_exempt
 
 from ckeditor_uploader import image_processing
 from ckeditor_uploader import utils
 from ckeditor_uploader.forms import SearchForm
+from ckeditor_uploader.settings import CKEDITOR_UPLOADER_RENAME_IMAGES
 from django.utils.html import escape
 
 
@@ -79,7 +83,13 @@ class ImageUploadView(generic.View):
 
     @staticmethod
     def _save_file(request, uploaded_file):
-        filename = get_upload_filename(uploaded_file.name, request.user)
+        if CKEDITOR_UPLOADER_RENAME_IMAGES:
+            fname = uploaded_file.name
+            ext = fname.split('.')[-1]
+            new_name = '{}.{}'.format(uuid4().hex, ext)
+            filename = get_upload_filename(new_name, request.user)
+        else:
+            filename = get_upload_filename(uploaded_file.name, request.user)
         saved_path = default_storage.save(filename, uploaded_file)
         return saved_path
 
